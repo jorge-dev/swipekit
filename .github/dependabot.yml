@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Playwright is the one that matters: it tracks real Chrome, and a version that
+  # drifts too far behind the installed browser is how collection starts failing
+  # in ways that look like a TikTok change.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

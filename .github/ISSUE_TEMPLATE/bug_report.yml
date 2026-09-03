@@ -1,0 +1,50 @@
+name: Bug report
+description: Something broke. This mirrors the checklist in CONTRIBUTING.md.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What you asked / ran
+      description: The exact question you gave your agent, or the CLI command.
+      placeholder: |
+        Agent: "find me 5 looksmaxxing accounts with 100k+ views in the last 30 days"
+        or
+        swipekit discover "morning routine" --target 120
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected vs what happened
+    validations:
+      required: true
+  - type: textarea
+    id: browser
+    attributes:
+      label: Did a Chrome window open? What was in it?
+      description: A captcha, an empty feed, a normal scroll, or no window at all. This usually identifies scraper bugs immediately.
+    validations:
+      required: true
+  - type: textarea
+    id: stats
+    attributes:
+      label: Output of `swipekit stats`
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: debug
+    attributes:
+      label: "If posts stopped being found: `npm run debug -- --url \"...\"` output"
+      description: Which `/api/` endpoints fired. Scraper bugs are often just TikTok changing their markup.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: Node version, OS, Chrome version
+      placeholder: "Node 24.4.0, macOS 15.5, Chrome 140"
+    validations:
+      required: true

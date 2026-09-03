@@ -1,0 +1,12 @@
+# Normalise to LF in the repo whatever the contributor's platform does locally.
+* text=auto eol=lf
+
+# Binary, never diffed or line-ending-mangled.
+*.png binary
+*.jpg binary
+*.gif binary
+*.mp4 binary
+*.mov binary
+
+# Generated; keep it out of diffs and language stats.
+package-lock.json -diff linguist-generated

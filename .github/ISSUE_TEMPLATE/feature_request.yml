@@ -1,0 +1,21 @@
+name: Idea / feature request
+description: A change you'd like. Read the "Scope" section of CONTRIBUTING.md first.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you want and why
+      description: The problem first, then the change. "I can't tell X" is more useful than "add a flag for X".
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: CONTRIBUTING.md rules out anything that pushes this toward scale or changes its legal position.
+      options:
+        - label: This does not add a login, headless mode, parallel crawling, proxy rotation, or captcha-solving.
+          required: true
+        - label: This does not encode a specific niche, product, or assumption about who is asking.
+          required: true

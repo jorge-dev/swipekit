@@ -1,0 +1,72 @@
+{
+  "name": "swipekit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Find the TikTok slideshow formats that work in your niche, with the numbers to back it up. Local MCP server and CLI — your own Chrome, a local SQLite file, no API key.",
+  "keywords": [
+    "tiktok",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "slideshow",
+    "content-research",
+    "playwright",
+    "market-research",
+    "social-media-analytics"
+  ],
+  "homepage": "https://github.com/jorge-dev/swipekit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jorge-dev/swipekit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jorge-dev/swipekit/issues"
+  },
+  "author": "Jorge Avila",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "cli": "node --no-warnings src/cli.ts",
+    "mcp": "node --no-warnings src/mcp.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && chmod +x dist/cli.js dist/mcp.js",
+    "postinstall": "node scripts/check-chrome.mjs || true",
+    "test": "node --no-warnings --test \"test/**/*.test.ts\"",
+    "test:watch": "node --no-warnings --test --watch \"test/**/*.test.ts\"",
+    "coverage": "node --no-warnings --test --experimental-test-coverage \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test",
+    "format": "biome check --write src test",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "spike": "node --no-warnings src/dev/spike.ts",
+    "debug": "node --no-warnings src/dev/debug.ts",
+    "prepare": "npm run build",
+    "reset": "node --no-warnings src/dev/reset.ts",
+    "trace": "node --no-warnings src/dev/trace.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "commander": "^15.0.0",
+    "playwright": "^1.56.0",
+    "zod": "^4.4.3"
+  },
+  "bin": {
+    "swipekit": "./dist/cli.js",
+    "swipekit-mcp": "./dist/mcp.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    ".claude/skills",
+    ".agents/skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.9",
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2"
+  }
+}

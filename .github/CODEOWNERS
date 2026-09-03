@@ -1,0 +1,3 @@
+# Every change needs the owner's review before it can merge.
+# (Enforced only when branch protection has "Require review from Code Owners" on.)
+* @jorge-dev

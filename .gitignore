@@ -1,0 +1,15 @@
+node_modules/
+chrome-profile/
+library/
+*.log
+dist/
+
+# Skill eval run artifacts (generated; the prompts in evals/evals.json are tracked)
+evals/workspace/
+
+# Local agent-scratch state (per-machine, never shared)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# macOS finder cruft
+.DS_Store

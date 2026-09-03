@@ -1,0 +1,58 @@
+name: release
+
+# Push a version tag to cut a release:
+#   git tag v0.1.0 && git push origin v0.1.0
+# The gate runs first; then a GitHub Release is created with the notes for that
+# version taken straight from CHANGELOG.md.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      # Never publish a release off a red tree.
+      - run: npm run check
+
+      - name: Extract this version's changelog section
+        id: notes
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]"      { grab=1; next }
+            grab && /^## \[/            { exit }
+            grab && /^\[[^]]+\]: http/  { exit }
+            grab                        { print }
+          ' CHANGELOG.md > release-notes.md
+          # trim leading/trailing blank lines
+          sed -i -e '/./,$!d' release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No '## [$VERSION]' section found in CHANGELOG.md" >&2
+            exit 1
+          fi
+          echo "Release notes:"
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md
