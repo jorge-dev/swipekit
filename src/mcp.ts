@@ -28,7 +28,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer as createHttpServer } from "node:http";
 import { z } from "zod";
-import type { BrowserContext } from "playwright";
+import type { BrowserContext } from "playwright-core";
 import { open, searchLibrary } from "./store/db.ts";
 import { discover, topPosts } from "./collect/discover.ts";
 import { hideBrowser, openSession, showBrowser } from "./collect/session.ts";

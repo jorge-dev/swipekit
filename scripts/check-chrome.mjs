@@ -13,7 +13,7 @@
  * headless launch-and-close is the only way to ask it "is channel chrome actually there"
  * without launching from openSession() itself later.
  */
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
 
 try {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
@@ -26,7 +26,7 @@ try {
       "     Chromium — Chromium's TLS fingerprint is distinguishable and gets a crawl\n" +
       "     soft-blocked before it starts.\n\n" +
       "     Install it before you run anything that opens the browser:\n" +
-      "       npx playwright install chrome   (downloads real Chrome, not Chromium)\n" +
+      "       Install Google Chrome from google.com/chrome (the real one, not Chromium)\n" +
       "       or from google.com/chrome\n",
   );
 }

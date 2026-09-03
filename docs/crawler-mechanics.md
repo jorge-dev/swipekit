@@ -29,7 +29,7 @@ This is literally what "searches TikTok like a person would" means.
 One persistent, logged-out, headful Chrome. Reused across every run.
 
 ```ts
-import { chromium, type BrowserContext } from "playwright";
+import { chromium, type BrowserContext } from "playwright-core";
 
 export async function openSession(): Promise<BrowserContext> {
   const ctx = await chromium.launchPersistentContext(

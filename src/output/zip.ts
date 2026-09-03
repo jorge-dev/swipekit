@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { fetchSlides, fetchSlidesWithRefresh, type SlideFetch } from "./slides.ts";
-import type { BrowserContext } from "playwright";
+import type { BrowserContext } from "playwright-core";
 import type { ScanAccountFn } from "../collect/scan.ts";
 import { libPath } from "../store/paths.ts";
 

@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { BrowserContext } from "playwright";
+import type { BrowserContext } from "playwright-core";
 import { ANALYSIS_DDL, type Analysis } from "../analyze/taxonomy.ts";
 
 const UA =

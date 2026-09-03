@@ -3,7 +3,7 @@
 Local TikTok slideshow research. Find which photo-post formats are winning in a
 niche and why, with evidence a reader could check.
 
-Node 24 + TypeScript (native type stripping) · Playwright (real Chrome) ·
+Node 24 + TypeScript (native type stripping) · playwright-core driving real Chrome ·
 `node:sqlite`. Install, commands and transports are in [README.md](README.md);
 dev setup and the gate are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
