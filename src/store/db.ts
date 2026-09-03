@@ -200,13 +200,25 @@ export function searchLibrary(
   // Unscoped, searching "puppy" while researching motorcycles returns the dog account
   // collected last week. Measured, not hypothetical.
   const scope = runScope(runId);
-  return db
+  const rows = db
     .prepare(
       `SELECT p.unique_id uniqueId, p.aweme_id awemeId, p.play views, p.collect saves,
-              p.followers, p.slide_count slides, substr(p.caption,1,90) hook
+              p.followers, p.slide_count slides, substr(p.caption,1,160) hook
        FROM post_fts f JOIN posts p ON p.aweme_id = f.aweme_id
        WHERE post_fts MATCH ? AND p.is_photo = 1 ${scope.sql}
        ORDER BY p.play DESC LIMIT ?`,
     )
     .all(query, ...scope.params, limit) as any[] as SearchHit[];
+  // The caption is grabbed wide, then clipped at a word so it does not end mid-hashtag.
+  for (const r of rows) r.hook = clip(r.hook, 90);
+  return rows;
+}
+
+/** Cut to at most `max` chars, on a space where possible, with a trailing ellipsis. */
+function clip(s: string, max: number): string {
+  const t = (s ?? "").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }
