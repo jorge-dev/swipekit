@@ -1,0 +1,80 @@
+{
+  "skill_name": "swipekit",
+  "evals": [
+    {
+      "id": 0,
+      "name": "find-accounts-to-copy",
+      "prompt": "i have a looksmaxxing app but i dont know how to promote it. i wanna get inspired \u2014 find me like 5 accounts whose format i could copy. they should have at least 100k views in the last 30 days",
+      "expected_output": "A comparison table of accounts with real metrics, plus prose naming which is the blueprint and which is a fluke.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Quotes at least 3 slide-1 hooks verbatim, each with its view count"
+        },
+        {
+          "text": "Names the actual product/app a competitor account is promoting, rather than anonymising it"
+        },
+        {
+          "text": "Shows post-level view spread for at least one recommended account (not just the aggregate)"
+        },
+        {
+          "text": "Includes a tiktok.com link for every account named"
+        },
+        {
+          "text": "Names at least 6 distinct accounts"
+        },
+        {
+          "text": "Names one account as the blueprint with reasoning tied to the user's follower position"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "is-this-niche-worth-it",
+      "prompt": "I built TickTod, a visual timer app for kids that helps parents get through morning and bedtime routines without arguing. Is TikTok slideshows actually a lane worth investing in for this, or am I better off elsewhere? Give me a straight answer.",
+      "expected_output": "A go/no-go grounded in how many small accounts have big slideshows, honest about thinness, ideally suggesting transplants.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Compares the niche against a denser niche in the library using specific numbers"
+        },
+        {
+          "text": "Slices photo vs video within the same niche rather than only reporting slideshow stats"
+        },
+        {
+          "text": "Reports save-rate evidence with named accounts and specific percentages"
+        },
+        {
+          "text": "Treats the thin-lane threshold as evidence \u2014 says what IS working in the niche rather than only disqualifying it"
+        },
+        {
+          "text": "Ends with a concrete next action, not just a verdict"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "decompose-and-adapt-a-post",
+      "prompt": "This post did 3.5M views from an account with about 4k followers: https://www.tiktok.com/@novaglow328/photo/7643853165837683981 \u2014 what's the format exactly, and could I reuse it for a fitness app?",
+      "expected_output": "Names hook/structure/angle from the actual slides, a reusable skeleton rewritten for fitness, and what the format requires to produce.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Gives a slide-by-slide breakdown derived from the actual slide images"
+        },
+        {
+          "text": "Quotes verbatim on-slide text from multiple slides"
+        },
+        {
+          "text": "Notes the quantified parenthetical device on the cover slide"
+        },
+        {
+          "text": "Provides a full slide skeleton rewritten for a fitness app"
+        },
+        {
+          "text": "Flags shipping risks under a company name (image rights, health claims, moderation) or states production inputs precisely"
+        }
+      ]
+    }
+  ]
+}

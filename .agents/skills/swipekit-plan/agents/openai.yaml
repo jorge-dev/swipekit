@@ -1,0 +1,14 @@
+# Codex-specific metadata. Other agents ignore this file; the portable skill is SKILL.md.
+interface:
+  display_name: "swipekit-plan"
+  short_description: "Turn swipekit research into a dated posting schedule, every post modelled on one that was measured."
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "swipekit"
+      description: "Local TikTok slideshow research server (swipekit-mcp). Register with: codex mcp add swipekit -- swipekit-mcp"
+      transport: "stdio"
