@@ -1,4 +1,4 @@
-import type { BrowserContext } from "playwright";
+import type { BrowserContext } from "playwright-core";
 import type { DatabaseSync } from "node:sqlite";
 import { harvest } from "./harvest.ts";
 import { recordBatch, upsertPost } from "../store/db.ts";

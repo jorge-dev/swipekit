@@ -12,6 +12,12 @@ entry written for someone deciding whether to upgrade.
 
 ## [Unreleased]
 
+### Changed
+- Depend on `playwright-core` instead of `playwright`. The tool drives your real
+  Chrome (`channel: "chrome"`), so it never needs Playwright's ~1.5 GB bundled
+  browsers — and now doesn't download them. First install goes from minutes to
+  seconds.
+
 ## [0.1.0] - 2026-08-29
 
 First public release.

@@ -1,4 +1,4 @@
-import { chromium, type BrowserContext, type Page } from "playwright";
+import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -28,7 +28,7 @@ const rewriteMissingChromeError = (err: unknown): never => {
         "(Chromium's is distinguishable, and that is what gets a crawl soft-blocked before " +
         "it starts).\n\n" +
         "Fix, either way:\n" +
-        "  npx playwright install chrome   (downloads real Chrome, not Chromium)\n" +
+        "  Install Google Chrome from google.com/chrome (the real one, not Chromium)\n" +
         "  or install Chrome yourself from google.com/chrome\n",
     );
   }
@@ -144,7 +144,7 @@ export async function openSession(): Promise<BrowserContext> {
  *
  * Every call is best-effort. Failing to move a window must never fail a crawl.
  */
-type WindowHandle = { session: import("playwright").CDPSession; windowId: number };
+type WindowHandle = { session: import("playwright-core").CDPSession; windowId: number };
 const windowHandles = new WeakMap<BrowserContext, WindowHandle>();
 
 async function windowHandle(ctx: BrowserContext): Promise<WindowHandle | null> {
