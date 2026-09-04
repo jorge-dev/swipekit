@@ -413,7 +413,6 @@ TikTok only. Instagram is the obvious next one and most of this would survive th
 
 ### Smaller things
 
-- No demo recording yet.
 - Nothing runs on a schedule. You rerun it when you want fresh numbers.
 - Chrome has to be visible, because that is how you solve the captcha when one shows up.
 
