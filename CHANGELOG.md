@@ -12,13 +12,7 @@ entry written for someone deciding whether to upgrade.
 
 ## [Unreleased]
 
-### Changed
-- Depend on `playwright-core` instead of `playwright`. The tool drives your real
-  Chrome (`channel: "chrome"`), so it never needs Playwright's ~1.5 GB bundled
-  browsers — and now doesn't download them. First install goes from minutes to
-  seconds.
-
-## [0.1.0] - 2026-08-29
+## [0.1.0] - 2026-09-03
 
 First public release.
 
@@ -50,6 +44,9 @@ First public release.
 - Each skill is carried as an independent copy per agent: `.claude/skills/` for
   Claude Code, `.agents/skills/` for Codex (with an `agents/openai.yaml`
   declaring the MCP dependency).
+- Depends on `playwright-core`, not the full `playwright` package: the tool drives
+  your real Chrome (`channel: "chrome"`) and never needs Playwright's ~1.5 GB of
+  bundled browsers, so first install is seconds rather than minutes.
 - CI runs typecheck, lint, and test as separate jobs on every push and PR. A
   `v*` tag runs the gate and publishes a GitHub Release with notes from this
   file.
