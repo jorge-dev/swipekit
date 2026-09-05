@@ -14,3 +14,4 @@
 - [ ] `npm run check` passes (typecheck + lint + test)
 - [ ] Odd-looking constants have a comment explaining why
 - [ ] No login, no headless mode, no parallelised crawling, no niche/user assumptions baked into `src/`
+- [ ] If a model wrote part of this, I said so above, and I have read and run every line

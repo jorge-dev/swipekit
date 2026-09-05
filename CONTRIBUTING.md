@@ -124,6 +124,14 @@ Say what you actually checked. "Ran discover on 3 queries, 2 cached, 1 fresh" is
 
 Comments should explain why, especially anything that looks arbitrary. Most of the odd looking constants in here exist because something broke.
 
+## Using an LLM
+
+This whole project is an agent tool, so it would be strange to ban the thing.
+If a model wrote part of a change, say so in the PR, and only open it once you
+have read every line, know why it works, and have run it. A PR the author cannot
+walk through in review gets closed — reviewing code nobody understands is slower
+than writing it. Generated tests or type boilerplate are fine and need no note.
+
 ## Reporting bugs
 
 Include the command or the question you asked your agent, what you expected, what happened, whether a Chrome window opened and what was in it, and the output of `swipekit stats`.

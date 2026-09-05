@@ -1,0 +1,15 @@
+# Auto-labels PRs by which files they touch — only where the diff is unambiguous.
+# Judgement labels (changelog:feature / :bugfix / :enhancement / :breaking / :security)
+# are applied by hand.
+
+"changelog:documentation":
+  - changed-files:
+      - all-globs-to-all-files: ["**/*.md"]
+
+"changelog:dependencies":
+  - changed-files:
+      - all-globs-to-all-files: ["package*.json"]
+
+"skip-changelog":
+  - changed-files:
+      - all-globs-to-all-files: [".github/**"]

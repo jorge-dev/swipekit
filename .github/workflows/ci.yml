@@ -5,14 +5,22 @@ on:
     branches: [main]
   pull_request:
 
-# One job per check, so a red run tells you which of the three failed at a glance
-# instead of "npm run check exited 1". All three must pass to merge.
+# Least privilege: nothing granted here, each job re-grants only what it needs.
+permissions: {}
+
+# One job per check, so a red run names which one failed instead of "npm run check
+# exited 1". typecheck and lint are platform-independent; test runs on both OSes
+# because report thumbnails shell out to macOS `sips` and the library path differs.
 jobs:
   typecheck:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
@@ -21,29 +29,49 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run lint
 
-  # Both platforms, because parts of this are genuinely OS-dependent: report
-  # thumbnails shell out to macOS `sips`, and the library path differs. Typecheck
-  # and lint are platform-independent, so they stay on one runner.
   test:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm test
+
+  # Lints the workflows themselves — unpinned actions, over-broad permissions,
+  # injectable ${{ }} inside run blocks. Keeps this file's own hardening from
+  # regressing on the next edit.
+  actions-lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: pipx run zizmor --persona=regular .github/workflows
+        env:
+          GH_TOKEN: ${{ github.token }}

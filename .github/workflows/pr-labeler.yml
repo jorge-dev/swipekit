@@ -1,0 +1,17 @@
+name: pr-labeler
+
+# pull_request_target so PRs opened from forks can still be labelled — the default
+# token on a fork's pull_request event is read-only.
+on:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] labeler reads the diff via the API; it never checks out or runs PR code
+
+permissions: {}
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
