@@ -28,6 +28,27 @@ npm run spike -- --url "https://www.tiktok.com/search?q=morning%20routine" --tar
 
 If that prints slideshow posts with slide URLs then everything downstream is normal application code. If it does not, start with `npm run debug -- --url "..."`, which dumps every `/api/` call the page makes plus a screenshot.
 
+## Commit messages
+
+[Conventional Commits](https://www.conventionalcommits.org/). Turn on the hook once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+```
+<type>[(scope)][!]: <summary>
+
+type    feat fix perf refactor docs test build ci chore revert
+scope   optional — collect store analyze output mcp cli skills
+!       breaking change (or a "BREAKING CHANGE:" footer)
+```
+
+`fix(collect): clip search captions at a word`. This repo squash-merges, so the
+**PR title** lands on `main` and follows the same rule — CI checks it. The type
+also drives the release-notes category (`feat` → Features, `fix` → Bug Fixes),
+and a branch named `feat/…` or `fix/…` gets that label automatically.
+
 ## Before you open a PR
 
 ```bash
@@ -123,6 +144,14 @@ One thing per PR.
 Say what you actually checked. "Ran discover on 3 queries, 2 cached, 1 fresh" is more useful than "works". If you touched the crawler, include post counts from a real run before and after.
 
 Comments should explain why, especially anything that looks arbitrary. Most of the odd looking constants in here exist because something broke.
+
+## Using an LLM
+
+This whole project is an agent tool, so it would be strange to ban the thing.
+If a model wrote part of a change, say so in the PR, and only open it once you
+have read every line, know why it works, and have run it. A PR the author cannot
+walk through in review gets closed — reviewing code nobody understands is slower
+than writing it. Generated tests or type boilerplate are fine and need no note.
 
 ## Reporting bugs
 
