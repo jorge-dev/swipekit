@@ -1,8 +1,20 @@
-# Auto-labels PRs by which files they touch — only where the diff is unambiguous.
-# Judgement labels (changelog:feature / :bugfix / :enhancement / :breaking / :security)
-# are applied by hand.
+# Auto-labels PRs for the generated release notes. Two signals:
+#   - the files touched, where the diff is unambiguous
+#   - the branch name prefix, which follows the Conventional Commit type
+# Judgement calls with neither signal (a fix that shares files with a feature) are
+# labelled by hand.
+
+"changelog:feature":
+  - head-branch: ["^feat", "^feature"]
+
+"changelog:bugfix":
+  - head-branch: ["^fix", "^bugfix", "^hotfix"]
+
+"changelog:enhancement":
+  - head-branch: ["^perf", "^refactor"]
 
 "changelog:documentation":
+  - head-branch: ["^docs"]
   - changed-files:
       - all-globs-to-all-files: ["**/*.md"]
 
@@ -11,5 +23,6 @@
       - all-globs-to-all-files: ["package*.json"]
 
 "skip-changelog":
+  - head-branch: ["^chore", "^ci", "^build", "^test"]
   - changed-files:
       - all-globs-to-all-files: [".github/**"]

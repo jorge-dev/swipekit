@@ -28,6 +28,27 @@ npm run spike -- --url "https://www.tiktok.com/search?q=morning%20routine" --tar
 
 If that prints slideshow posts with slide URLs then everything downstream is normal application code. If it does not, start with `npm run debug -- --url "..."`, which dumps every `/api/` call the page makes plus a screenshot.
 
+## Commit messages
+
+[Conventional Commits](https://www.conventionalcommits.org/). Turn on the hook once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+```
+<type>[(scope)][!]: <summary>
+
+type    feat fix perf refactor docs test build ci chore revert
+scope   optional — collect store analyze output mcp cli skills
+!       breaking change (or a "BREAKING CHANGE:" footer)
+```
+
+`fix(collect): clip search captions at a word`. This repo squash-merges, so the
+**PR title** lands on `main` and follows the same rule — CI checks it. The type
+also drives the release-notes category (`feat` → Features, `fix` → Bug Fixes),
+and a branch named `feat/…` or `fix/…` gets that label automatically.
+
 ## Before you open a PR
 
 ```bash

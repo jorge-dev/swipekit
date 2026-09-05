@@ -1,4 +1,5 @@
-<!-- One thing per PR. See CONTRIBUTING.md. -->
+<!-- Title: a Conventional Commit, e.g. "fix(collect): clip captions at a word".
+     One thing per PR. See CONTRIBUTING.md. -->
 
 ## Description
 
