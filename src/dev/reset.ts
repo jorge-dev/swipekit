@@ -22,8 +22,12 @@
  * a process holding a directory open mid-write is how you get a corrupted db or an
  * orphaned profile lock. Every path comes from the real constants in paths.ts and
  * session.ts, so it cannot point at the wrong directory if that logic changes.
+ *
+ * The external commands (du, tar, pkill) are run through execFileSync with an argv
+ * array and no shell, so a path with a space or a shell metacharacter in it is just an
+ * argument, never something the shell could act on.
  */
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, sep } from "node:path";
@@ -76,11 +80,7 @@ if (targets.length === 0) {
 
 const sizeOf = (path: string) => {
   try {
-    return (
-      execSync(`du -sh ${JSON.stringify(path)}`, { encoding: "utf8" })
-        .split("\t")[0]
-        ?.trim() ?? "?"
-    );
+    return execFileSync("du", ["-sh", path], { encoding: "utf8" }).split("\t")[0]?.trim() ?? "?";
   } catch {
     return "?";
   }
@@ -126,8 +126,9 @@ if (wantBackup) {
     mkdirSync(backupDir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
     const out = join(backupDir, `swipekit-library-${stamp}.tgz`);
-    const parent = JSON.stringify(dirname(LIBRARY_DIR));
-    execSync(`tar -czf ${JSON.stringify(out)} -C ${parent} ${JSON.stringify(basename(LIBRARY_DIR))}`);
+    execFileSync("tar", ["-czf", out, "-C", dirname(LIBRARY_DIR), basename(LIBRARY_DIR)], {
+      stdio: "ignore",
+    });
     console.log(`Backed up to ${out}   ${sizeOf(out)}\n`);
   }
 }
@@ -139,7 +140,7 @@ if (!(skipPrompts || (await ask("Delete now? [y/N] ", false)))) {
 
 const kill = (pattern: string) => {
   try {
-    execSync(`pkill -f ${JSON.stringify(pattern)}`, { stdio: "ignore" });
+    execFileSync("pkill", ["-f", pattern], { stdio: "ignore" });
   } catch {
     // nothing matched — that's the common case, not an error
   }
