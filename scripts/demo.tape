@@ -10,10 +10,14 @@
 # come back empty.
 #
 # `swipekit` must be on PATH (`npm link`), or every line renders "command not found".
+#
+# FORCE_COLOR below pins the CLI's own colour on, so the recording does not depend on
+# VHS's terminal reporting colour support. The Catppuccin theme then maps it.
 
 Output docs/demo-cli.gif
 
 Set Shell zsh
+Env FORCE_COLOR "1"
 Set FontSize 19
 Set Width 1060
 Set Height 470

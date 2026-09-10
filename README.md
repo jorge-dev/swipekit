@@ -355,7 +355,7 @@ That third rule is the one that matters after a global install. Without it, runn
 
 `library/` is gitignored. It is yours and it never leaves the machine.
 
-To start over completely (a fresh library, a fresh Chrome profile, first-run captcha and all): `npm run reset` from inside a clone, or `node --no-warnings src/dev/reset.ts` if you're running from source with no install.
+To start over completely (a fresh library, a fresh Chrome profile, first-run captcha and all): `npm run reset` from inside a clone, or `node --no-warnings src/dev/reset.ts` if you're running from source with no install. It shows what it will delete, offers to tar the library up first, and only removes anything after you confirm. Pass `-- --yes` to skip the prompts in a script, and `-- --backup` or `-- --no-backup` to answer the backup question ahead of time.
 
 ---
 
