@@ -21,7 +21,11 @@ renders identically every time. It does need a library with something in it — 
 research once first, or you will render a table of zeros.
 
 `swipekit` has to be on your PATH (`npm link`), otherwise every beat renders
-"command not found".
+"command not found". Link the current source, not a stale global build, or the
+recording will be missing the wordmark and the coloured output.
+
+The tape sets `Env FORCE_COLOR 1` so the CLI's own colour renders regardless of what
+VHS reports for terminal colour support. The `Catppuccin Mocha` theme maps it.
 
 The beats, and what each one is actually saying:
 
