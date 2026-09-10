@@ -82,3 +82,14 @@ lands moves with how much work the agent decided to do.
 
 `gifsicle` runs at the end. GitHub renders an inline GIF up to about 10MB, and a dark UI
 over a photographic desktop lands just over that without it.
+
+---
+
+## The social preview card — `docs/social-card.png`
+
+The image shown when the repo URL is shared. Without one, GitHub builds a card from the
+owner's avatar, so a face turns up in the link unfurl.
+
+`docs/social-card.png` is 1280x640 (GitHub's size). It is not picked up from the repo
+automatically: upload it at **Settings > General > Social preview**. To change it,
+replace that file with any 1280x640 image and re-upload.
