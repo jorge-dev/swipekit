@@ -35,71 +35,25 @@ import { getProduct, listProducts, saveProduct } from "./store/products.ts";
 import { LIBRARY_DIR, libPath } from "./store/paths.ts";
 
 /**
- * Opened on first use, not at import. `--help` and a bad flag should never leave a
- * database file behind on someone's disk.
- */
-const handle: { db: DatabaseSync | null } = { db: null };
-const db = () => (handle.db ??= open());
-
-const int = (v: string) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new Error(`expected a number, got "${v}"`);
-  return n;
-};
-const pct = (n: number) => `${Math.round(n * 100)}%`;
-const csv = (v?: string) => (v ?? "").split(",").filter(Boolean);
-
-/**
- * Aligned columns, no ceremony. console.table() prints an "(index)" column and wraps
- * every string in quotes, which reads like a debugger dump rather than a report — fine
- * for a REPL, wrong for a tool someone runs to make a decision.
- *
- * Numbers right-align, everything else left-aligns, and a column whose header ends in
- * "%" gets its values run through pct(). Pass `cols` to fix the order and drop the rest.
- */
-function table(rows: Record<string, unknown>[], cols?: string[]): void {
-  if (!rows.length) return;
-  const keys = cols ?? Object.keys(rows[0]!);
-  const fmt = (k: string, v: unknown) =>
-    v == null ? "-" : k.endsWith("%") && typeof v === "number" ? pct(v) : String(v);
-  const body = rows.map((r) => keys.map((k) => fmt(k, r[k])));
-  const width = keys.map((k, i) => Math.max(k.length, ...body.map((row) => row[i]!.length)));
-  const numeric = keys.map((_, i) => body.every((row) => /^[\d.%-]+$/.test(row[i]!)));
-  const line = (cells: string[]) =>
-    cells
-      .map((c, i) => (numeric[i] ? c.padStart(width[i]!) : c.padEnd(width[i]!)))
-      .join("  ")
-      .trimEnd();
-  console.log(line(keys));
-  for (const row of body) console.log(line(row));
-}
-
-/** Browser work always closes its context, including when the command throws. */
-async function withSession<T>(fn: (ctx: Awaited<ReturnType<typeof openSession>>) => Promise<T>) {
-  const ctx = await openSession();
-  try {
-    return await fn(ctx);
-  } finally {
-    await ctx.close();
-  }
-}
-
-/**
- * ANSI colour, on only for an interactive terminal. Every helper is identity when
- * colour is off, so nothing downstream has to branch. FORCE_COLOR wins, then NO_COLOR
- * and a dumb/piped terminal turn it off. Commander measures help width with the escape
- * sequences stripped, so styled help still lines up.
+ * ANSI colour for our own output (tables, status lines). Same rule commander uses for
+ * its help, so the whole CLI agrees: NO_COLOR or FORCE_COLOR=0 turns it off,
+ * FORCE_COLOR / CLICOLOR_FORCE turns it on, otherwise it follows an interactive
+ * terminal. Every helper is identity when colour is off, so piped output stays clean,
+ * and the table pads on the raw text before wrapping so columns still line up.
  */
 const colour = (() => {
-  const force = process.env.FORCE_COLOR;
-  if (force != null) return force !== "0" && force !== "false";
-  return Boolean(process.stdout.isTTY) && !process.env.NO_COLOR && process.env.TERM !== "dumb";
+  if (process.env.NO_COLOR || process.env.FORCE_COLOR === "0" || process.env.FORCE_COLOR === "false") {
+    return false;
+  }
+  if (process.env.FORCE_COLOR || process.env.CLICOLOR_FORCE) return true;
+  return Boolean(process.stdout.isTTY && process.stdout.hasColors?.());
 })();
 const sgr = (code: number) => (s: string) => (colour ? `\x1b[${code}m${s}\x1b[0m` : s);
 const bold = sgr(1);
 const dim = sgr(2);
 const red = sgr(31);
 const green = sgr(32);
+const yellow = sgr(33);
 const cyan = sgr(36);
 
 /** The wordmark. Plain block capitals so it survives a copy-paste and NO_COLOR. */
@@ -114,6 +68,75 @@ const BANNER = green(
     "",
   ].join("\n"),
 );
+
+/**
+ * Opened on first use, not at import. `--help` and a bad flag should never leave a
+ * database file behind on someone's disk.
+ */
+const handle: { db: DatabaseSync | null } = { db: null };
+const db = () => (handle.db ??= open());
+
+const int = (v: string) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) throw new Error(`expected a number, got "${v}"`);
+  return n;
+};
+const pct = (n: number) => `${Math.round(n * 100)}%`;
+const csv = (v?: string) => (v ?? "").split(",").filter(Boolean);
+const num = (v: unknown) => green(String(v));
+const note = (msg: string) => void console.log(yellow(msg));
+
+/**
+ * Aligned columns, no ceremony. console.table() prints an "(index)" column and wraps
+ * every string in quotes, which reads like a debugger dump rather than a report — fine
+ * for a REPL, wrong for a tool someone runs to make a decision.
+ *
+ * Numbers right-align, everything else left-aligns, and a column whose header ends in
+ * "%" gets its values run through pct(). Pass `cols` to fix the order and drop the rest.
+ *
+ * The header is bold; in the body a handle cell is cyan and a percentage cell is green,
+ * since those are what the eye lands on first. Padding is measured on the raw text and
+ * the colour wraps the padded cell, so the columns still line up.
+ */
+function table(rows: Record<string, unknown>[], cols?: string[]): void {
+  if (!rows.length) return;
+  const keys = cols ?? Object.keys(rows[0]!);
+  const fmt = (k: string, v: unknown) =>
+    v == null ? "-" : k.endsWith("%") && typeof v === "number" ? pct(v) : String(v);
+  const body = rows.map((r) => keys.map((k) => fmt(k, r[k])));
+  const width = keys.map((k, i) => Math.max(k.length, ...body.map((row) => row[i]!.length)));
+  const numeric = keys.map((_, i) => body.every((row) => /^[\d.%-]+$/.test(row[i]!)));
+  const pad = (cell: string, i: number) => (numeric[i] ? cell.padStart(width[i]!) : cell.padEnd(width[i]!));
+  const paint = (cell: string, padded: string) => {
+    if (cell.startsWith("@")) return cyan(padded);
+    if (/^\d[\d.]*%$/.test(cell)) return green(padded);
+    return padded;
+  };
+  console.log(
+    keys
+      .map((k, i) => bold(pad(k, i)))
+      .join("  ")
+      .trimEnd(),
+  );
+  for (const row of body) {
+    console.log(
+      row
+        .map((cell, i) => paint(cell, pad(cell, i)))
+        .join("  ")
+        .trimEnd(),
+    );
+  }
+}
+
+/** Browser work always closes its context, including when the command throws. */
+async function withSession<T>(fn: (ctx: Awaited<ReturnType<typeof openSession>>) => Promise<T>) {
+  const ctx = await openSession();
+  try {
+    return await fn(ctx);
+  } finally {
+    await ctx.close();
+  }
+}
 
 const program = new Command();
 
@@ -148,7 +171,7 @@ program
   .option("--brief <text>", "one line on what you are researching", "")
   .option("--use <runId>", "switch the current run")
   .action((o) => {
-    if (o.start) console.log("started", startRun(db(), o.start, o.brief));
+    if (o.start) console.log(green("started"), cyan(startRun(db(), o.start, o.brief)));
     if (o.use) setCurrentRun(db(), o.use);
     const rows = listRuns(db()).map((r) => ({
       "": r.current ? "→" : " ",
@@ -168,9 +191,11 @@ program
   .option("--limit <n>", "rows to print", int, 15)
   .action((query: string, o) => {
     const rows = searchLibrary(db(), query, o.limit);
-    if (!rows.length) return void console.log("nothing matches yet — run discover first");
+    if (!rows.length) return note("nothing matches yet — run discover first");
     for (const r of rows)
-      console.log(`@${r.uniqueId}  ${r.views} views  ${r.saves} saves  ${r.slides} slides  ${r.hook}`);
+      console.log(
+        `${cyan(`@${r.uniqueId}`)}  ${r.views} views  ${r.saves} saves  ${r.slides} slides  ${dim(r.hook)}`,
+      );
   });
 
 program
@@ -184,11 +209,11 @@ program
     const r = findPriorResearch(db(), q.startsWith("@") ? { handle: q.slice(1) } : { keyword: q });
     const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "—");
     if (!r.accountCoverage.length && !r.relatedRuns.length) {
-      return void console.log(`no prior research on ${q} — safe to collect`);
+      return void console.log(green(`no prior research on ${q} — safe to collect`));
     }
     for (const a of r.accountCoverage)
       console.log(
-        `@${a.handle}: ${a.postsHeld} posts held in run "${a.runLabel ?? "?"}", last fetched ${day(a.lastFetched)}`,
+        `${cyan(`@${a.handle}`)}: ${a.postsHeld} posts held in run "${a.runLabel ?? "?"}", last fetched ${day(a.lastFetched)}`,
       );
     for (const run of r.relatedRuns)
       console.log(
@@ -202,8 +227,8 @@ program
   .argument("[slug]", "print an existing profile")
   .option("--new <slug>", "write a blank profile template you can fill in")
   .action((slug, o) => {
-    if (o.new) return void console.log("template →", saveProduct(o.new).path);
-    if (slug) return void console.log(getProduct(slug)?.content ?? "not found");
+    if (o.new) return void console.log(green("template →"), cyan(saveProduct(o.new).path));
+    if (slug) return void console.log(getProduct(slug)?.content ?? yellow("not found"));
     table(listProducts() as Record<string, unknown>[]);
   });
 
@@ -225,13 +250,13 @@ program
       }),
     );
     for (const s of summaries) {
-      console.log(`\n── "${s.query}"  [${s.batchId}]`);
-      console.log(`   scanned ${s.scanned}  slideshows ${s.slideshows} (${pct(s.photoShare)})`);
+      console.log(`\n${bold(`── "${s.query}"`)}  ${dim(`[${s.batchId}]`)}`);
+      console.log(`   scanned ${s.scanned}  slideshows ${num(s.slideshows)} (${pct(s.photoShare)})`);
       console.log(
-        `   qualifying accounts ${s.qualifyingAccounts}  medianVPF ${s.medianVPF}  medianSaveRatio ${s.medianSaveRatio}`,
+        `   qualifying accounts ${num(s.qualifyingAccounts)}  medianVPF ${s.medianVPF}  medianSaveRatio ${s.medianSaveRatio}`,
       );
-      console.log(`   modal slide count ${s.slideCountMode}  sounds ${JSON.stringify(s.topSounds)}`);
-      console.log(`   ${s.note}`);
+      console.log(`   modal slide count ${s.slideCountMode}  sounds ${dim(JSON.stringify(s.topSounds))}`);
+      console.log(`   ${dim(s.note)}`);
     }
   });
 
@@ -243,12 +268,12 @@ program
   .action(async (handles: string[], o) => {
     const reports = await withSession((ctx) => scanAccounts(ctx, db(), handles, { target: o.target }));
     for (const r of reports) {
-      console.log(`\n── @${r.handle}  ${r.followers ?? "?"} followers`);
+      console.log(`\n${bold(`── @${r.handle}`)}  ${r.followers ?? "?"} followers`);
       console.log(
-        `   posts ${r.postsScanned}  slideshows ${r.slideshows} (${pct(r.photoShare)})  modal slides ${r.modalSlideCount}`,
+        `   posts ${r.postsScanned}  slideshows ${num(r.slideshows)} (${pct(r.photoShare)})  modal slides ${r.modalSlideCount}`,
       );
       console.log(
-        `   bangers ${r.bangers} (${pct(r.bangerRate)})  REPEATABLE: ${r.repeatable ? "YES" : "no"}`,
+        `   bangers ${r.bangers} (${pct(r.bangerRate)})  REPEATABLE: ${r.repeatable ? green("YES") : dim("no")}`,
       );
       console.log(
         `   median views ${r.medianViews}  vpf ${r.medianVPF}  save ${(r.medianSaveRatio * 100).toFixed(1)}%  comment ${(r.medianCommentRatio * 100).toFixed(2)}%`,
@@ -256,8 +281,8 @@ program
       console.log(
         `   last post ${r.daysSinceLastPost}d ago  ${r.postsLast30d} in 30d  cadence ${r.cadencePerWeek}/wk  consistency ${r.consistency}`,
       );
-      console.log(`   sounds ${JSON.stringify(r.topSounds)}`);
-      console.log(`   → ${r.verdict}`);
+      console.log(`   sounds ${dim(JSON.stringify(r.topSounds))}`);
+      console.log(`   → ${bold(r.verdict)}`);
     }
   });
 
@@ -272,14 +297,14 @@ program
       for (const id of ids) {
         const r = await trackSound(ctx, db(), id, { target: o.target, warmed });
         warmed = true;
-        console.log(`\n── sound ${r.soundId}`);
+        console.log(`\n${bold(`── sound ${r.soundId}`)}`);
         console.log(
-          `   scanned ${r.scanned}  slideshows ${r.slideshows}  distinct accounts ${r.distinctAccounts}`,
+          `   scanned ${r.scanned}  slideshows ${num(r.slideshows)}  distinct accounts ${r.distinctAccounts}`,
         );
         console.log(
-          `   COHORT: ${r.isCohort ? "YES" : "no"}  medianVPF ${r.medianVPF}  modal slides ${r.slideCountMode}`,
+          `   COHORT: ${r.isCohort ? green("YES") : dim("no")}  medianVPF ${r.medianVPF}  modal slides ${r.slideCountMode}`,
         );
-        console.log(`   ${r.note}`);
+        console.log(`   ${dim(r.note)}`);
       }
     });
   });
@@ -314,7 +339,7 @@ program
       limit: o.limit,
       runId: o.run,
     });
-    if (!rows.length) return void console.log("no accounts matched — loosen filters or run discover");
+    if (!rows.length) return note("no accounts matched — loosen filters or run discover");
     table(
       // Six columns, not ten: a wall of numbers is not a decision. followers next to
       // `best` is the thesis in one row — a tiny account with a huge post — and
@@ -330,7 +355,8 @@ program
       })),
     );
     const ns = needsScan(rows);
-    if (ns.length) console.log(`\nunreliable (too few posts held) — scan first: ${ns.join(", ")}`);
+    if (ns.length)
+      console.log(`\n${yellow(`unreliable (too few posts held) — scan first: ${ns.join(", ")}`)}`);
   });
 
 program
@@ -360,14 +386,14 @@ program
       maxAgeDays: o.maxAgeDays,
       excludeAssets: csv(o.excludeAssets),
     });
-    if (!rows.length) return void console.log("no rows — run discover first");
+    if (!rows.length) return note("no rows — run discover first");
     for (const r of rows) {
       console.log(
-        `\n@${r.handle}  ${r.followers ?? "?"}f  ${r.views} views  vpf ${r.vpf}  save ${(r.saveRatio * 100).toFixed(1)}%  ` +
+        `\n${cyan(`@${r.handle}`)}  ${r.followers ?? "?"}f  ${r.views} views  vpf ${r.vpf}  save ${(r.saveRatio * 100).toFixed(1)}%  ` +
           `cmt ${(r.commentRatio * 100).toFixed(2)}%  outlier ${r.outlier ?? "–"}  ${r.slides} slides  ${r.ageDays}d old`,
       );
-      console.log(`  ${r.hook || "(no caption)"}`);
-      console.log(`  ${r.url}`);
+      console.log(`  ${dim(r.hook || "(no caption)")}`);
+      console.log(`  ${cyan(r.url)}`);
     }
   });
 
@@ -377,10 +403,10 @@ program
   .option("--limit <n>", "rows to print", int, 10)
   .action((o) => {
     const rows = soundCandidates(db(), o.limit, currentRun(db()));
-    if (!rows.length) return void console.log("no multi-account sounds yet — run discover first");
+    if (!rows.length) return note("no multi-account sounds yet — run discover first");
     for (const r of rows)
       console.log(
-        `${r.tracked ? "·" : "→"} ${r.soundId}  ${r.accounts} accounts / ${r.posts} posts  avg ${r.medianViews} views  newest ${r.newestDays}d`,
+        `${r.tracked ? dim("·") : green("→")} ${cyan(r.soundId)}  ${r.accounts} accounts / ${r.posts} posts  avg ${r.medianViews} views  newest ${r.newestDays}d`,
       );
   });
 
@@ -391,18 +417,16 @@ program
   .action((o) => {
     const r = formatRollup(db(), { excludeAssets: csv(o.excludeAssets), runId: currentRun(db()) });
     if (!r.byHookType.length && !r.byStructure.length) {
-      return void console.log(
-        "no format has repeated across accounts yet — read more posts with `top` + read_slides",
-      );
+      return note("no format has repeated across accounts yet — read more posts with `top` + read_slides");
     }
-    console.log("\nhook types more than one account landed on");
+    console.log(`\n${bold("hook types more than one account landed on")}`);
     table(r.byHookType as Record<string, unknown>[], ["hook_type", "accounts", "posts", "avg_views"]);
-    console.log("\nstructures");
+    console.log(`\n${bold("structures")}`);
     table(r.byStructure as Record<string, unknown>[], ["structure", "accounts", "posts"]);
-    console.log("\nvisual style");
+    console.log(`\n${bold("visual style")}`);
     table(r.visualStyles as Record<string, unknown>[], ["visual_style", "n"]);
     if (r.assetDemand.length) {
-      console.log("\nwhat producing these costs, by input");
+      console.log(`\n${bold("what producing these costs, by input")}`);
       table(r.assetDemand as Record<string, unknown>[], ["asset", "posts"]);
     }
   });
@@ -417,16 +441,18 @@ program
   .description("what is in the library right now")
   .action(() => {
     const q = (s: string) => db().prepare(s).get() as any;
-    console.log("library     ", LIBRARY_DIR);
-    console.log("posts       ", q("SELECT COUNT(*) n FROM posts").n);
-    console.log("slideshows  ", q("SELECT COUNT(*) n FROM posts WHERE is_photo=1").n);
-    console.log("accounts    ", q("SELECT COUNT(*) n FROM accounts").n);
-    console.log("batches     ", q("SELECT COUNT(*) n FROM batches").n);
+    console.log(dim("library     "), cyan(LIBRARY_DIR));
+    console.log(dim("posts       "), num(q("SELECT COUNT(*) n FROM posts").n));
+    console.log(dim("slideshows  "), num(q("SELECT COUNT(*) n FROM posts WHERE is_photo=1").n));
+    console.log(dim("accounts    "), num(q("SELECT COUNT(*) n FROM accounts").n));
+    console.log(dim("batches     "), num(q("SELECT COUNT(*) n FROM batches").n));
     console.log(
-      "go/no-go    ",
-      q(`SELECT COUNT(DISTINCT sec_uid) n FROM posts
+      dim("go/no-go    "),
+      num(
+        q(`SELECT COUNT(DISTINCT sec_uid) n FROM posts
          WHERE is_photo=1 AND play >= 100000 AND followers < 100000`).n,
-      "accounts <100k followers with a 100k+ view slideshow",
+      ),
+      dim("accounts <100k followers with a 100k+ view slideshow"),
     );
   });
 
@@ -440,8 +466,8 @@ program
   .option("--run <runId>", "scope to one research run (defaults to the current one)")
   .action(async (o) => {
     console.log(
-      "report →",
-      await buildReport(db(), { posts: o.posts, out: o.out, runId: o.run ?? currentRun(db()) }),
+      green("report →"),
+      cyan(await buildReport(db(), { posts: o.posts, out: o.out, runId: o.run ?? currentRun(db()) })),
     );
   });
 
@@ -451,13 +477,13 @@ program
   .option("--run <runId>", "scope to one research run (defaults to the current one)")
   .action((o) => {
     const plan = latestPlan(db(), o.run ?? currentRun(db()));
-    if (!plan) return void console.log("no plan yet — ask your agent to write one after the playbook");
-    console.log(`${plan.entries.length} posts at ~${plan.postsPerWeek}/week from ${plan.startsOn}\n`);
+    if (!plan) return note("no plan yet — ask your agent to write one after the playbook");
+    console.log(bold(`${plan.entries.length} posts at ~${plan.postsPerWeek}/week from ${plan.startsOn}\n`));
     for (const e of plan.entries) {
-      console.log(`${e.date}  ${String(e.weekday).slice(0, 3)}  ${e.pattern}`);
-      console.log(`             ${e.topic}`);
+      console.log(`${cyan(e.date)}  ${dim(String(e.weekday).slice(0, 3))}  ${e.pattern}`);
+      console.log(`             ${dim(e.topic)}`);
       const from = (e.sources ?? []).map((x) => `@${x.handle ?? x.awemeId}`).join(", ");
-      console.log(`             ${e.slides.length} slides${from ? `, modelled on ${from}` : ""}`);
+      console.log(`             ${e.slides.length} slides${from ? dim(`, modelled on ${from}`) : ""}`);
     }
   });
 
@@ -467,7 +493,7 @@ program
   .option("--run <runId>", "scope to one research run (defaults to the current one)")
   .option("--out <path>", "where to write it")
   .action(async (o) => {
-    console.log(await buildPlanDoc(db(), { runId: o.run ?? currentRun(db()), out: o.out }));
+    console.log(cyan(await buildPlanDoc(db(), { runId: o.run ?? currentRun(db()), out: o.out })));
   });
 
 program
@@ -483,8 +509,8 @@ program
       posts: o.posts,
       out: o.out,
     });
-    console.log(`${r.zip}\n  ${r.posts} posts, ${r.images} slide images`);
-    console.log("  Notion: Import > Markdown & CSV, pick the zip. Images come with it.");
+    console.log(`${cyan(r.zip)}\n  ${r.posts} posts, ${r.images} slide images`);
+    console.log(dim("  Notion: Import > Markdown & CSV, pick the zip. Images come with it."));
   });
 
 program
@@ -497,7 +523,7 @@ program
     const targets = ids.length ? ids : topPosts(db(), { limit: 3, sortBy: "saves" }).map((r) => r.id);
     for (const p of await fetchSlides(db(), targets, o.maxSlides)) {
       if (p.error) {
-        console.log(`${p.awemeId}  ✗ ${p.error}`);
+        console.log(`${p.awemeId}  ${red(`✗ ${p.error}`)}`);
         continue;
       }
       const dir = libPath("posts", p.awemeId);
@@ -506,7 +532,7 @@ program
         writeFileSync(`${dir}/slide-${String(k + 1).padStart(2, "0")}.jpg`, Buffer.from(im.data, "base64"));
       }
       writeFileSync(`${dir}/metadata.json`, JSON.stringify({ ...p, images: undefined }, null, 2));
-      console.log(`@${p.handle}  ${p.images.length} slides → ${dir}`);
+      console.log(`${cyan(`@${p.handle}`)}  ${p.images.length} slides → ${cyan(dir)}`);
     }
   });
 

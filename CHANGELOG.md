@@ -13,9 +13,11 @@ entry written for someone deciding whether to upgrade.
 ## [Unreleased]
 
 ### Added
-- CLI wordmark on `swipekit --help`, and colour on help output for an interactive
-  terminal. `NO_COLOR`, a dumb terminal, or a pipe turns colour off; `FORCE_COLOR`
-  turns it on.
+- CLI wordmark on `swipekit --help`, and colour across help and command output
+  (tables, `stats`, `report` paths, status lines, errors) for an interactive
+  terminal. `NO_COLOR` or `FORCE_COLOR=0` turns it off, `FORCE_COLOR` /
+  `CLICOLOR_FORCE` turns it on, otherwise it follows the terminal. Piped output is
+  unchanged, byte for byte.
 - `npm run reset` is now interactive: it prints what it will delete with sizes,
   offers to tar the library up first, and only removes anything after you confirm.
   New flags `--yes`, `--backup` / `--no-backup`, and `--backup-dir <path>`
