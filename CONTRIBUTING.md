@@ -141,6 +141,8 @@ Realistically it is two files of new work per platform. A harvest layer for that
 
 One thing per PR.
 
+Fill in [`.github/pull_request_template.md`](.github/pull_request_template.md). Every section, real content. Opening a PR through the GitHub web UI pre-fills it; `gh pr create` and API clients do not, so keep it. The `pr-body` check fails a PR that dropped the template or left "How this was tested" empty.
+
 Say what you actually checked. "Ran discover on 3 queries, 2 cached, 1 fresh" is more useful than "works". If you touched the crawler, include post counts from a real run before and after.
 
 Comments should explain why, especially anything that looks arbitrary. Most of the odd looking constants in here exist because something broke.

@@ -141,6 +141,15 @@ so a pretty-printed request body is silently ignored, and a stale import takes
 the whole server down at startup. Re-run the initialize plus tools/list handshake
 after touching imports.
 
+## Opening a PR
+
+Fill in `.github/pull_request_template.md` in full: `## Description`, `## How this
+was tested` with the commands you actually ran, `## Interface changes` if any tool or
+CLI surface changed, the `## Checklist`, and `## LLM use`. Do not open a PR with a
+free-form body. `gh pr create --body` does not pull in the template, so paste it. The
+`pr-body` check enforces the sections; the title still has to be a Conventional Commit
+per `pr-title`. One thing per PR.
+
 ## Pointers
 
 - Numbers from real runs: which surfaces yield slideshows, what a gated response
