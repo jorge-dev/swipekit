@@ -84,6 +84,37 @@ async function withSession<T>(fn: (ctx: Awaited<ReturnType<typeof openSession>>)
   }
 }
 
+/**
+ * ANSI colour, on only for an interactive terminal. Every helper is identity when
+ * colour is off, so nothing downstream has to branch. FORCE_COLOR wins, then NO_COLOR
+ * and a dumb/piped terminal turn it off. Commander measures help width with the escape
+ * sequences stripped, so styled help still lines up.
+ */
+const colour = (() => {
+  const force = process.env.FORCE_COLOR;
+  if (force != null) return force !== "0" && force !== "false";
+  return Boolean(process.stdout.isTTY) && !process.env.NO_COLOR && process.env.TERM !== "dumb";
+})();
+const sgr = (code: number) => (s: string) => (colour ? `\x1b[${code}m${s}\x1b[0m` : s);
+const bold = sgr(1);
+const dim = sgr(2);
+const red = sgr(31);
+const green = sgr(32);
+const cyan = sgr(36);
+
+/** The wordmark. Plain block capitals so it survives a copy-paste and NO_COLOR. */
+const BANNER = green(
+  [
+    "",
+    "  ███  █   █  █  ███  ███  █ █  █  ███",
+    "  █    █   █  █  █ █  █    ██   █   █ ",
+    "  ███  █ █ █  █  ███  ███  █    █   █ ",
+    "    █  ██ ██  █  █    █    ██   █   █ ",
+    "  ███  █   █  █  █    ███  █ █  █   █ ",
+    "",
+  ].join("\n"),
+);
+
 const program = new Command();
 
 program
@@ -95,6 +126,18 @@ program
   .version("0.1.0")
   .showHelpAfterError("(run --help to see the available options)")
   .enablePositionalOptions();
+
+// The wordmark on the top-level help only, not on every `swipekit <command> --help`.
+program.addHelpText("beforeAll", (ctx) => (ctx.command === program ? BANNER : ""));
+
+program.configureHelp({
+  styleTitle: bold,
+  styleCommandText: green,
+  styleSubcommandTerm: green,
+  styleOptionTerm: cyan,
+  styleArgumentTerm: cyan,
+  styleDescriptionText: dim,
+});
 
 // ── research scope ───────────────────────────────────────────────────────────
 
@@ -486,7 +529,7 @@ program
 try {
   await program.parseAsync(process.argv);
 } catch (err) {
-  console.error(`\n${(err as Error).message}\n`);
+  console.error(`\n${red((err as Error).message)}\n`);
   process.exitCode = 1;
 } finally {
   handle.db?.close();

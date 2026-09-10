@@ -49,7 +49,8 @@ So it is a real screen recording, cut afterwards.
 2. A **fresh** agent session in this repo, so the skills load and the tool calls are visible.
 3. **Empty the library first** — `npm run reset` also wipes the Chrome profile and brings
    back the first-run captcha, so to keep the profile warm delete only
-   `~/.swipekit/library`.
+   `~/.swipekit/library` by hand instead. `reset` now prompts before it deletes and can
+   tar the library up first; `-- --yes --no-backup` reproduces the old one-shot behaviour.
 4. Warm the profile on a throwaway query, pointing somewhere else so the real library
    stays empty:
    `SWIPEKIT_HOME=/tmp/warm swipekit discover "morning routine ideas" --target 25`
