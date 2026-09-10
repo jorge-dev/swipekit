@@ -206,7 +206,9 @@ swipekit seen @glowuptips.apex
 
 `search` full-text searches everything already collected, instantly, no browsing. `seen` checks whether an account or topic has already been researched before you scrape it again. That's the "ask about it twice, run it once" part.
 
-Run `swipekit` with no arguments to see every command.
+Run `swipekit` with no arguments to see every command, `swipekit <command> --help` for
+its flags, and [docs/CLI.md](docs/CLI.md) for the full reference: what each command is
+for, the order they go in, and what the numbers mean.
 
 No global install needed for any of this either. From inside a clone, after `npm install`, `node --no-warnings src/cli.ts` is the same command with the same flags:
 
