@@ -1,0 +1,45 @@
+name: pr-body
+
+# The PR body is the review's starting point and the record of what was actually
+# tested. `gh pr create --body ...` and API-opened PRs skip the template that the
+# web UI pre-fills, so this fails a PR that dropped it. It is a shallow check: it
+# proves the sections are present and "How this was tested" is not blank, not that
+# they were filled in well. That is the reviewer's job.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  pr-body:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the pull request template sections
+        env:
+          # Via env, never inlined into the script — the body is attacker-controlled.
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          fail=0
+          need() {
+            if ! grep -qiF "$1" <<<"$BODY"; then
+              echo "::error::PR body is missing the '$1' section from .github/pull_request_template.md"
+              fail=1
+            fi
+          }
+          need "## Description"
+          need "## How this was tested"
+          need "## Checklist"
+
+          # The heading alone is not enough: there has to be something under it.
+          tested=$(sed -n '/## How this was tested/,/^## /p' <<<"$BODY" | sed '1d;$d')
+          if ! grep -qE '[A-Za-z0-9]' <<<"$tested"; then
+            echo "::error::The 'How this was tested' section is empty. Say what you actually ran."
+            fail=1
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo "Keep every section of .github/pull_request_template.md and fill it in."
+            exit 1
+          fi
+          echo "PR body follows the template."
