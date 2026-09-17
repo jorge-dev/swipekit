@@ -47,7 +47,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "commander": "^15.0.0",
     "playwright-core": "^1.63.0",
-    "zod": "^4.5.4"
+    "zod": "^4.6.5"
   },
   "bin": {
     "swipekit": "./dist/cli.js",
