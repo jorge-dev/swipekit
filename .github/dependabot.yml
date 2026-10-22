@@ -5,6 +5,8 @@ updates:
   # in ways that look like a TikTok change.
   - package-ecosystem: npm
     directory: /
+    commit-message:
+      prefix: chore(deps)
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

@@ -147,6 +147,38 @@ Say what you actually checked. "Ran discover on 3 queries, 2 cached, 1 fresh" is
 
 Comments should explain why, especially anything that looks arbitrary. Most of the odd looking constants in here exist because something broke.
 
+### Automatic dependency merges
+
+The `pr-body` workflow also handles Dependabot's patch/minor updates to
+`@biomejs/biome`, `@types/node`, and `typescript`. It requires one signed bot commit,
+only dependency-version changes to `package.json` / `package-lock.json` (with
+runtime dependencies unchanged), a branch in this repository,
+and `main` as its target. Runtime packages (including Playwright), major updates,
+and GitHub Actions changes need review.
+
+Eligible updates get a template section that preserves Dependabot's release notes
+and links to the pending checks. The ordinary body validator still runs. The
+workflow waits for required checks, checks the current head again, approves that
+commit, and squash-merges it. It runs on GitHub when a PR opens or changes, so a
+local Codex session is not needed. It never installs or runs PR code with a write
+token, and never leaves auto-merge enabled for a later commit.
+
+Repository setup: enable **Allow GitHub Actions to create and approve pull
+requests**, keep strict/up-to-date branch protection for `main`, and require all
+of these checks from GitHub Actions: `typecheck`, `lint`, `test (ubuntu-latest)`,
+`test (macos-latest)`, `build`, `actions-lint`, `pr-body`, `pr-title`,
+`analyze (javascript-typescript)`, and `CodeQL`. The helper refuses automatic merge
+if any is missing from the required checks or is not passing. Repository-level
+**Allow auto-merge** is not needed. No personal access token is needed.
+The applicable Actions event policy must allow `pull_request_target`; see
+[GitHub's policy guidance](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
+
+A failed check, a branch behind `main`, missing permissions, or the 20-minute
+timeout leaves the PR open. A Dependabot rebase or a rerun after resolving the
+failure retries it; additional commits require review too. The recurring review
+handles these exceptions. Changes to
+the policy are tested with `node --test .github/scripts/*.test.mjs` in CI.
+
 ## Using an LLM
 
 This whole project is an agent tool, so it would be strange to ban the thing.
