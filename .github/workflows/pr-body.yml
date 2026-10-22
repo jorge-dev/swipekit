@@ -6,20 +6,60 @@ name: pr-body
 # proves the sections are present and "How this was tested" is not blank, not that
 # they were filled in well. That is the reviewer's job.
 on:
-  pull_request:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] API metadata only; all checkouts use trusted base code, with no installs or PR execution
     types: [opened, edited, synchronize, reopened]
 
 permissions: {}
 
+concurrency:
+  group: pr-body-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  pr-body:
+  prepare-dependabot:
+    if: >-
+      github.repository == 'jorge-dev/swipekit' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      eligible: ${{ steps.prepare.outputs.eligible }}
+      dependencies: ${{ steps.metadata.outputs.updated-dependencies-json }}
+    steps:
+      # This privileged workflow runs only base-branch code, never PR code or installs.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        id: metadata
+      - name: Add a truthful validation record for eligible updates
+        id: prepare
+        run: node .github/scripts/dependabot.mjs prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+
+  pr-body:
+    needs: prepare-dependabot
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - name: Require the pull request template sections
         env:
-          # Via env, never inlined into the script — the body is attacker-controlled.
-          BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # Bot edits do not emit another workflow event; validate the live body here.
+          BODY=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .body)
           fail=0
           need() {
             if ! grep -qiF "$1" <<<"$BODY"; then
@@ -43,3 +83,36 @@ jobs:
             exit 1
           fi
           echo "PR body follows the template."
+
+  merge-dependabot:
+    needs: [prepare-dependabot, pr-body]
+    if: needs.prepare-dependabot.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: dependabot-merge
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+      statuses: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - name: Wait for required validation
+        run: gh pr checks "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --required --watch --fail-fast --interval 20
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Recheck eligibility, approve, and squash-merge the validated head
+        run: node .github/scripts/dependabot.mjs merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          DEPENDENCIES: ${{ needs.prepare-dependabot.outputs.dependencies }}
