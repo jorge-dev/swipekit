@@ -149,6 +149,9 @@ Comments should explain why, especially anything that looks arbitrary. Most of t
 
 ### Automatic dependency merges
 
+Same-repository PRs authored by the Dependabot bot are exempt from the PR body
+template check. This does not change required CI checks or automatic merge eligibility.
+
 The `pr-body` workflow also handles Dependabot's patch/minor updates to
 `@biomejs/biome`, `@types/node`, and `typescript`. It requires one signed bot commit,
 only dependency-version changes to `package.json` / `package-lock.json` (with
@@ -157,7 +160,7 @@ and `main` as its target. Runtime packages (including Playwright), major updates
 and GitHub Actions changes need review.
 
 Eligible updates get a template section that preserves Dependabot's release notes
-and links to the pending checks. The ordinary body validator still runs. The
+and links to the pending checks. The body check succeeds without requiring the template. The
 workflow waits for required checks, checks the current head again, approves that
 commit, and squash-merges it. It runs on GitHub when a PR opens or changes, so a
 local Codex session is not needed. It never installs or runs PR code with a write

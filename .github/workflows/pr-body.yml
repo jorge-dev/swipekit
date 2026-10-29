@@ -54,6 +54,12 @@ jobs:
       pull-requests: read
     steps:
       - name: Require the pull request template sections
+        # Dependabot supplies release notes; template prose is required only of human PRs.
+        if: >-
+          !(github.event.pull_request.user.login == 'dependabot[bot]' &&
+            github.event.pull_request.user.type == 'Bot' &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.base.repo.full_name == github.repository)
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
