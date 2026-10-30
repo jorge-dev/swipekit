@@ -18,3 +18,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
+
+    # CodeQL init and analyze reject configuration from different versions.
+    groups:
+      codeql:
+        patterns:
+          - "github/codeql-action/*"
